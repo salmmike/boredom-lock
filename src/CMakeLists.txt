@@ -4,6 +4,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 add_executable(boredom-lock
     main.cpp
     tools.cpp
+    scheduler.cpp
 )
 
 target_link_libraries(boredom-lock

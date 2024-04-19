@@ -13,3 +13,4 @@ set (CMAKE_FLAGS "-DINSTALL_GTEST=OFF")
 
 add_subdirectory(src)
 add_subdirectory(simpleini)
+add_subdirectory(test)
