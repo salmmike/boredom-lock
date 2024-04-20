@@ -81,16 +81,13 @@ TEST(NAME, test_in_bored_period)
 
 #define TEST_FILE_PATH "/tmp/boredomlock-test.ini"
 void
-create_test_file(bool is_alarm, usb_id device)
+create_test_file(usb_id device,
+                 const std::string& weekday,
+                 const std::string& weekend)
 {
     std::ofstream testconfig(TEST_FILE_PATH);
-    if (is_alarm) {
-        testconfig << "[Test entry]\nusb_id = " << device.to_string()
-                   << "\nweekdays = 00:00-23:59\nweekend=00:00-23:59";
-    } else {
-        testconfig << "[Test entry]\nusb_id = " << device.to_string()
-                   << "\nweekdays = 00:00-00:00\nweekend=00:00-00:00";
-    }
+    testconfig << "[Test entry]\nusb_id = " << device.to_string()
+               << "\nweekdays = " << weekday << "\nweekend=" << weekend << "\n";
     testconfig.close();
 }
 
@@ -100,7 +97,7 @@ TEST(NAME, test_boredom_scheduler_is_alarm)
     id.vid = 0xdead;
     id.pid = 0xbeef;
 
-    create_test_file(true, id);
+    create_test_file(id, "00:00-23:59", "00:00-23:59");
     auto sched = BoredomScheduler{ TEST_FILE_PATH };
     sched.init();
     ASSERT_TRUE(sched.is_alarm());
@@ -119,7 +116,7 @@ TEST(NAME, test_boredom_scheduler_no_alarm)
     id.vid = 0xdead;
     id.pid = 0xbeef;
 
-    create_test_file(false, id);
+    create_test_file(id, "00:00-00:00", "00:00-00:00");
     auto sched = BoredomScheduler{ TEST_FILE_PATH };
     sched.init();
     ASSERT_FALSE(sched.is_alarm());
