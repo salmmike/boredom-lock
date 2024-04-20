@@ -76,11 +76,11 @@ is_in_bored_periods(const std::chrono::hh_mm_ss<std::chrono::seconds>& now,
 bool
 is_weekend(const std::chrono::time_point<std::chrono::system_clock>& now)
 {
-    auto const date = std::chrono::year_month_weekday(
-      std::chrono::time_point_cast<std::chrono::days>(now));
+    const auto now_time_t = std::chrono::system_clock::to_time_t(now);
+    const auto local_tm = std::localtime(&now_time_t);
 
-    return (date.weekday() == std::chrono::Saturday ||
-            date.weekday() == std::chrono::Sunday);
+    return (local_tm->tm_wday == std::chrono::Saturday.c_encoding() ||
+            local_tm->tm_wday == std::chrono::Sunday.c_encoding());
 }
 
 std::vector<std::pair<std::vector<BoredPeriod>, usb_id>>
@@ -113,8 +113,6 @@ has_unconnected(
     for (const auto& item : bored) {
         if (is_in_bored_periods(now_hms, item.first)) {
             if (!usb_id_is_connected(item.second)) {
-                std::cout << "Unconnected device: " << std::hex
-                          << item.second.vid << ":" << item.second.pid << "\n";
                 return true;
             }
         }
