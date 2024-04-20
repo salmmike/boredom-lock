@@ -73,6 +73,8 @@ has_unconnected(
 class BoredomScheduler
 {
   public:
+    BoredomScheduler(){};
+
     /// @brief Create a BoredomScheduler object with a config.
     /// @param config filepath to a configuration file.
     /// @details The config file should contain configuration items
@@ -85,6 +87,10 @@ class BoredomScheduler
     /// while the weekdays and weekends values contain lists of the times
     /// that the device should be plugged in.
     explicit BoredomScheduler(const std::filesystem::path& config);
+
+    /// @brief Set config file path.
+    /// @param config path to config file.
+    void set_config_file(const std::filesystem::path& config);
 
     /// @brief Initialize the object. Reads configuration and saved
     /// enabled/disabled state.

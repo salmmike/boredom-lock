@@ -130,6 +130,13 @@ BoredomScheduler::BoredomScheduler(const std::filesystem::path& config)
 }
 
 void
+BoredomScheduler::set_config_file(const std::filesystem::path& config)
+{
+    m_configfile = config;
+    init();
+}
+
+void
 BoredomScheduler::init()
 {
     if (!std::filesystem::exists(m_dir)) {
