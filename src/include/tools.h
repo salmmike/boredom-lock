@@ -19,6 +19,12 @@ struct usb_id
     {
         return this->vid == rhs.vid && this->pid == rhs.pid;
     }
+    std::string to_string()
+    {
+        char buffer[11];
+        snprintf(buffer, sizeof(buffer), "%04x:%04x", vid, pid);
+        return std::string{ buffer };
+    }
 };
 
 /// @brief Returns True if the device is connected via USB.
@@ -37,5 +43,16 @@ list_usb();
 /// @return usb_id struct
 usb_id
 usb_id_from_string(const std::string& id);
+
+/// @brief Lists all currently plugged usb_ids
+/// @return list of usb_id
+std::vector<usb_id>
+init_find_device();
+
+/// @brief Finds a USB device that is not in the previous list
+/// @param  list of usb_id from init_find_device function
+/// @return list of USB ids not in previous
+std::vector<usb_id>
+find_device(std::vector<usb_id> previous);
 
 #endif /* TOOLS_H */

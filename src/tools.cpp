@@ -59,3 +59,25 @@ usb_id_from_string(const std::string& id)
 
     return usb_id(vid, pid);
 }
+
+std::vector<usb_id>
+init_find_device()
+{
+    return list_usb();
+}
+
+std::vector<usb_id>
+find_device(std::vector<usb_id> previous)
+{
+    const auto current = list_usb();
+    std::vector<usb_id> not_found;
+
+    for (const auto& dev : current) {
+        if (std::find(std::begin(previous), std::end(previous), dev) ==
+            std::end(previous)) {
+            not_found.push_back(dev);
+        }
+    }
+
+    return not_found;
+}
