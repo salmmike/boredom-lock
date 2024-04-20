@@ -4,6 +4,9 @@
 #include <iostream>
 #include <unistd.h>
 
+const std::string weekend{ "weekend" };
+const std::string weekdays{ "weekdays" };
+
 std::chrono::hh_mm_ss<std::chrono::seconds>
 hours_minutes(const std::string_view& view)
 {
@@ -88,7 +91,7 @@ parse_from_iniconf(const simpleini::SimpleINI& config,
                    const std::chrono::system_clock::time_point& now)
 {
 
-    const auto key = is_weekend(now) ? "weekend" : "weekdays";
+    const auto key = is_weekend(now) ? weekend : weekdays;
     const auto map = config.get_map();
     std::vector<std::pair<std::vector<BoredPeriod>, usb_id>> bored{
         map.size()
@@ -205,6 +208,20 @@ BoredomScheduler::enable()
     statusfile.write(reinterpret_cast<const char*>(&m_status),
                      sizeof(m_status));
     statusfile.close();
+}
+
+void
+BoredomScheduler::create_boredom_period(usb_id device,
+                                        const std::string& weekday_times,
+                                        const std::string& weekend_times)
+{
+    simpleini::INISection new_section{ device.to_string(),
+                                       { { "usb_id", device.to_string() },
+                                         { weekdays, weekday_times },
+                                         { weekend, weekend_times } } };
+
+    m_config.add_section(device.to_string(), new_section);
+    m_config.write();
 }
 
 bool

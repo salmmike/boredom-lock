@@ -88,7 +88,7 @@ class BoredomScheduler
     /// that the device should be plugged in.
     explicit BoredomScheduler(const std::filesystem::path& config);
 
-    /// @brief Set config file path.
+    /// @brief Set config file path. init is called after the path is set.
     /// @param config path to config file.
     void set_config_file(const std::filesystem::path& config);
 
@@ -109,9 +109,21 @@ class BoredomScheduler
     /// @brief Enables the alarms.
     void enable();
 
+    /// @brief Adds a boredom period for device to the current configuration
+    /// file.
+    /// @param device usb_id of the device.
+    /// @param weekday_times string representing weekday bored times, e.g.
+    /// 20:00-24:00
+    /// @param weekend_times string representing weekend bored times, e.g.
+    /// 14:00-24:00
+    void create_boredom_period(usb_id device,
+                               const std::string& weekday_times,
+                               const std::string& weekend_times);
+
   private:
     /// @brief Configuration file path.
     std::filesystem::path m_configfile;
+    /// @brief INI configuration read from m_configfile.
     simpleini::SimpleINI m_config;
     /// @brief File used for saving object status to storage.
     std::filesystem::path m_statusfile;
