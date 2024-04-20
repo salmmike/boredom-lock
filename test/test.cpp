@@ -104,6 +104,13 @@ TEST(NAME, test_boredom_scheduler_is_alarm)
     auto sched = BoredomScheduler{ TEST_FILE_PATH };
     sched.init();
     ASSERT_TRUE(sched.is_alarm());
+    sched.snooze(std::chrono::seconds(1));
+    ASSERT_FALSE(sched.is_alarm());
+    usleep(1200000);
+    ASSERT_TRUE(sched.is_alarm());
+    sched.disable();
+    ASSERT_FALSE(sched.is_alarm());
+    sched.enable();
 }
 
 TEST(NAME, test_boredom_scheduler_no_alarm)

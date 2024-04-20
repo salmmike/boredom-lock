@@ -155,7 +155,7 @@ BoredomScheduler::init()
 bool
 BoredomScheduler::is_alarm() const
 {
-    if (m_is_snooze()) {
+    if (m_is_snooze() || m_status == BSchedulerStatus::DISABLED) {
         return false;
     }
 
@@ -181,7 +181,7 @@ BoredomScheduler::snooze(std::chrono::seconds seconds)
 void
 BoredomScheduler::disable()
 {
-    m_status = BSchedulerStatus::ENABLED;
+    m_status = BSchedulerStatus::DISABLED;
     std::ofstream statusfile(m_statusfile, std::ofstream::binary);
 
     statusfile.write(reinterpret_cast<const char*>(&m_status),
@@ -192,7 +192,7 @@ BoredomScheduler::disable()
 void
 BoredomScheduler::enable()
 {
-    m_status = BSchedulerStatus::DISABLED;
+    m_status = BSchedulerStatus::ENABLED;
     std::ofstream statusfile(m_statusfile, std::ofstream::binary);
 
     statusfile.write(reinterpret_cast<const char*>(&m_status),
