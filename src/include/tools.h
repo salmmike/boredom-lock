@@ -19,7 +19,7 @@ struct usb_id
     {
         return this->vid == rhs.vid && this->pid == rhs.pid;
     }
-    std::string to_string()
+    std::string to_string() const
     {
         char buffer[11];
         snprintf(buffer, sizeof(buffer), "%04x:%04x", vid, pid);

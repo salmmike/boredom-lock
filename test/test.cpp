@@ -86,7 +86,7 @@ create_test_file(usb_id device,
                  const std::string& weekend)
 {
     std::ofstream testconfig(TEST_FILE_PATH);
-    testconfig << "[Test entry]\nusb_id = " << device.to_string()
+    testconfig << "[TestDevice]\nusb_id = " << device.to_string()
                << "\nweekdays = " << weekday << "\nweekend=" << weekend << "\n";
     testconfig.close();
 }
@@ -120,6 +120,21 @@ TEST(NAME, test_boredom_scheduler_no_alarm)
     auto sched = BoredomScheduler{ TEST_FILE_PATH };
     sched.init();
     ASSERT_FALSE(sched.is_alarm());
+}
+
+TEST(NAME, test_boredom_scheduler_list_unconnected)
+{
+    usb_id id;
+    id.vid = 0xdead;
+    id.pid = 0xbeef;
+
+    create_test_file(id, "00:00-24:00", "00:00-24:00");
+    auto sched = BoredomScheduler{ TEST_FILE_PATH };
+    sched.init();
+
+    auto mlist = sched.list_unconnected_devices();
+    ASSERT_EQ(mlist.size(), 1);
+    ASSERT_EQ(mlist[0].name, "TestDevice");
 }
 
 int

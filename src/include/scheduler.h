@@ -5,11 +5,20 @@
 #include <chrono>
 #include <filesystem>
 #include <simpleini.h>
+#include <string>
 
 /// @brief Period of time that user should spend without the configured device.
 /// e.g. 20:00 - 24:00
 using BoredPeriod = std::pair<std::chrono::hh_mm_ss<std::chrono::seconds>,
                               std::chrono::hh_mm_ss<std::chrono::seconds>>;
+
+/// @brief USB device with usb_id and name
+struct USBDevice
+{
+    usb_id id;
+    std::string name;
+    bool operator==(const USBDevice& rhs) const { return this->id == rhs.id; }
+};
 
 enum BSchedulerStatus
 {
@@ -54,19 +63,24 @@ is_weekend(const std::chrono::time_point<std::chrono::system_clock>& now);
 /// @param config a SimpleINI object with the used configuration.
 /// @param now the time wanted (current time).
 /// @return list of BoredPeriods and USB ids that are valid on the date of now.
-std::vector<std::pair<std::vector<BoredPeriod>, usb_id>>
+std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>
 parse_from_iniconf(const simpleini::SimpleINI& config,
                    const std::chrono::system_clock::time_point& now);
 
 /// @brief Check if the <BoredPeriod, usb_id> list contains an unplugged USB
 /// device that should be plugged in.
-/// @param bored The <BoredPeriod, usb_id> list to check.
+/// @param bored The <BoredPeriod, USB_device> list to check.
 /// @param now_hms current hour, minute and second.
 /// @return True if the bored list contains an USB item that should be connected
 /// but is not.
 bool
 has_unconnected(
-  const std::vector<std::pair<std::vector<BoredPeriod>, usb_id>>& bored,
+  const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
+  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms);
+
+std::vector<USBDevice>
+list_unconnected(
+  const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
   const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms);
 
 /// @brief Tracks configuration and connected devices
@@ -117,9 +131,13 @@ class BoredomScheduler
     /// 20:00-24:00
     /// @param weekend_times string representing weekend bored times, e.g.
     /// 14:00-24:00
-    void create_boredom_period(usb_id device,
+    void create_boredom_period(const USBDevice& device,
                                const std::string& weekday_times,
                                const std::string& weekend_times);
+
+    /// @brief List devices that should be connected but aren't.
+    /// @return list of unconnected devices.
+    std::vector<USBDevice> list_unconnected_devices() const;
 
   private:
     /// @brief Configuration file path.

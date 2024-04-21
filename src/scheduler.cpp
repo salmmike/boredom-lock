@@ -86,22 +86,22 @@ is_weekend(const std::chrono::time_point<std::chrono::system_clock>& now)
             local_tm->tm_wday == std::chrono::Sunday.c_encoding());
 }
 
-std::vector<std::pair<std::vector<BoredPeriod>, usb_id>>
+std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>
 parse_from_iniconf(const simpleini::SimpleINI& config,
                    const std::chrono::system_clock::time_point& now)
 {
 
     const auto key = is_weekend(now) ? weekend : weekdays;
     const auto map = config.get_map();
-    std::vector<std::pair<std::vector<BoredPeriod>, usb_id>> bored{
+    std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>> bored{
         map.size()
     };
 
     std::transform(
       std::begin(map), std::end(map), std::begin(bored), [key](auto item) {
-          return std::pair<std::vector<BoredPeriod>, usb_id>{
+          return std::pair<std::vector<BoredPeriod>, USBDevice>{
               parse_bored_periods(item.second.get(key)),
-              usb_id_from_string(item.second.get("usb_id"))
+              { usb_id_from_string(item.second.get("usb_id")), item.first }
           };
       });
 
@@ -110,17 +110,33 @@ parse_from_iniconf(const simpleini::SimpleINI& config,
 
 bool
 has_unconnected(
-  const std::vector<std::pair<std::vector<BoredPeriod>, usb_id>>& bored,
+  const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
   const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms)
 {
     for (const auto& item : bored) {
         if (is_in_bored_periods(now_hms, item.first)) {
-            if (!usb_id_is_connected(item.second)) {
+            if (!usb_id_is_connected(item.second.id)) {
                 return true;
             }
         }
     }
     return false;
+}
+
+std::vector<USBDevice>
+list_unconnected(
+  const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
+  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms)
+{
+    std::vector<USBDevice> unconnected;
+    for (const auto& item : bored) {
+        if (is_in_bored_periods(now_hms, item.first)) {
+            if (!usb_id_is_connected(item.second.id)) {
+                unconnected.push_back(item.second);
+            }
+        }
+    }
+    return unconnected;
 }
 
 BoredomScheduler::BoredomScheduler(const std::filesystem::path& config)
@@ -211,17 +227,32 @@ BoredomScheduler::enable()
 }
 
 void
-BoredomScheduler::create_boredom_period(usb_id device,
+BoredomScheduler::create_boredom_period(const USBDevice& device,
                                         const std::string& weekday_times,
                                         const std::string& weekend_times)
 {
-    simpleini::INISection new_section{ device.to_string(),
-                                       { { "usb_id", device.to_string() },
+    simpleini::INISection new_section{ device.name,
+                                       { { "usb_id", device.id.to_string() },
                                          { weekdays, weekday_times },
                                          { weekend, weekend_times } } };
 
-    m_config.add_section(device.to_string(), new_section);
+    m_config.add_section(device.id.to_string(), new_section);
     m_config.write();
+}
+
+std::vector<USBDevice>
+BoredomScheduler::list_unconnected_devices() const
+{
+    const auto now = std::chrono::system_clock::now();
+    const auto now_t = std::chrono::system_clock::to_time_t(now);
+    auto now_tm = std::localtime(&now_t);
+
+    const auto now_hms = std::chrono::hh_mm_ss<std::chrono::seconds>{ (
+      std::chrono::hours(now_tm->tm_hour) +
+      std::chrono::minutes(now_tm->tm_min)) };
+
+    auto bored = parse_from_iniconf(m_config, now);
+    return list_unconnected(bored, now_hms);
 }
 
 bool
