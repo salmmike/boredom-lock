@@ -27,10 +27,10 @@ target_link_libraries(boredomlock
                       usb
 )
 
-target_include_directories(boredomlock INTERFACE ${CMAKE_SOURCE_DIR}/src/include)
+target_include_directories(boredomlock PUBLIC ${CMAKE_SOURCE_DIR}/src/include)
 option(INSTALL_GTEST OFF)
 
 install(TARGETS boredomlock
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/boredomlock
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/boredomlock
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
