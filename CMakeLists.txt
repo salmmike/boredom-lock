@@ -9,7 +9,7 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 set (CMAKE_FLAGS "-DINSTALL_GTEST=OFF")
 
-#enable_testing()
+enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(simpleini)

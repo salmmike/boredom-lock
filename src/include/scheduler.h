@@ -103,6 +103,7 @@ class BoredomScheduler
     /// @brief Set the alarm off for a time period.
     /// @param seconds Number of seconds to snooze.
     void snooze(std::chrono::seconds seconds);
+    void snooze(int seconds) { snooze(std::chrono::seconds(seconds)); };
 
     /// @brief Disables the alarms until enabled.
     void disable();

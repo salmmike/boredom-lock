@@ -1,8 +1,8 @@
 
-#include "scheduler.h"
 #include <cassert>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <scheduler.h>
 
 #define NAME scheduler_test
 
