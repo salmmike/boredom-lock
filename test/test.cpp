@@ -97,7 +97,7 @@ TEST(NAME, test_boredom_scheduler_is_alarm)
     id.vid = 0xdead;
     id.pid = 0xbeef;
 
-    create_test_file(id, "00:00-23:59", "00:00-23:59");
+    create_test_file(id, "00:00-24:00", "00:00-24:00");
     auto sched = BoredomScheduler{ TEST_FILE_PATH };
     sched.init();
     ASSERT_TRUE(sched.is_alarm());
