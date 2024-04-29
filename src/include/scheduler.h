@@ -4,6 +4,7 @@
 #include "tools.h"
 #include <chrono>
 #include <filesystem>
+#include <functional>
 #include <simpleini.h>
 #include <string>
 
@@ -87,7 +88,12 @@ list_unconnected(
 class BoredomScheduler
 {
   public:
-    BoredomScheduler(){};
+    BoredomScheduler()
+    {
+        const char* homedir = getenv("HOME");
+        m_dir = std::filesystem::path(homedir) /
+                std::filesystem::path(".local/share/BoredomScheduler/");
+    };
 
     /// @brief Create a BoredomScheduler object with a config.
     /// @param config filepath to a configuration file.
@@ -124,6 +130,8 @@ class BoredomScheduler
     /// @brief Enables the alarms.
     void enable();
 
+    void setDeviceEventCB(std::function<void(void)> callback);
+
     /// @brief Adds a boredom period for device to the current configuration
     /// file.
     /// @param device usb_id of the device.
@@ -137,7 +145,8 @@ class BoredomScheduler
 
     /// @brief List devices that should be connected but aren't.
     /// @return list of unconnected devices.
-    std::vector<USBDevice> list_unconnected_devices() const;
+    std::vector<USBDevice> list_unconnected_devices();
+    void update();
 
   private:
     /// @brief Configuration file path.
@@ -150,7 +159,8 @@ class BoredomScheduler
     BSchedulerStatus m_status;
     std::chrono::seconds m_snooze_t{ 0 };
     std::chrono::time_point<std::chrono::system_clock> m_snooze_start;
-
+    std::function<void(void)> m_callback;
+    std::vector<USBDevice> m_unconnected;
     bool m_is_snooze() const;
 };
 

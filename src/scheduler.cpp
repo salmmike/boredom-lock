@@ -2,10 +2,70 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <libudev.h>
 #include <unistd.h>
 
 const std::string weekend{ "weekend" };
 const std::string weekdays{ "weekdays" };
+
+void
+print_device(BoredomScheduler* scheduler, std::string dev_path)
+{
+    auto path = std::filesystem::path("/sys" + dev_path);
+    std::cout << "Path " << path << " exists:" << std::filesystem::exists(path)
+              << "\n";
+    scheduler->update(path);
+}
+
+int
+udev_monitor(std::function<void(BoredomScheduler*, std::string)> cb,
+             BoredomScheduler* scheduler)
+{
+    struct udev* udev;
+    struct udev_device* dev;
+    struct udev_monitor* mon;
+    int fd;
+
+    /* create udev object */
+    udev = udev_new();
+    if (!udev) {
+        fprintf(stderr, "Can't create udev\n");
+        return 1;
+    }
+
+    mon = udev_monitor_new_from_netlink(udev, "udev");
+    udev_monitor_filter_add_match_subsystem_devtype(mon, "usb", NULL);
+    udev_monitor_enable_receiving(mon);
+    fd = udev_monitor_get_fd(mon);
+
+    while (1) {
+        fd_set fds;
+        struct timeval tv;
+        int ret;
+
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+
+        ret = select(fd + 1, &fds, NULL, NULL, &tv);
+        if (ret > 0 && FD_ISSET(fd, &fds)) {
+            dev = udev_monitor_receive_device(mon);
+            if (dev) {
+                const auto dev_path = udev_device_get_devpath(dev);
+                cb(scheduler, dev_path);
+                /* free dev */
+                udev_device_unref(dev);
+            }
+        }
+        /* 50 milliseconds */
+        usleep(1000);
+    }
+    /* free udev */
+    udev_unref(udev);
+
+    return 0;
+}
 
 std::chrono::hh_mm_ss<std::chrono::seconds>
 hours_minutes(const std::string_view& view)
@@ -176,6 +236,7 @@ BoredomScheduler::init()
     statusfile.close();
 
     m_config = simpleini::SimpleINI(m_configfile);
+    udev_monitor(print_device, this);
 }
 
 bool
@@ -227,6 +288,12 @@ BoredomScheduler::enable()
 }
 
 void
+BoredomScheduler::setDeviceEventCB(std::function<void(void)> callback)
+{
+    m_callback = callback;
+}
+
+void
 BoredomScheduler::create_boredom_period(const USBDevice& device,
                                         const std::string& weekday_times,
                                         const std::string& weekend_times)
@@ -241,8 +308,16 @@ BoredomScheduler::create_boredom_period(const USBDevice& device,
 }
 
 std::vector<USBDevice>
-BoredomScheduler::list_unconnected_devices() const
+BoredomScheduler::list_unconnected_devices()
 {
+    update();
+    return m_unconnected;
+}
+
+void
+BoredomScheduler::update()
+{
+    std::cout << "Update\n";
     const auto now = std::chrono::system_clock::now();
     const auto now_t = std::chrono::system_clock::to_time_t(now);
     auto now_tm = std::localtime(&now_t);
@@ -252,7 +327,7 @@ BoredomScheduler::list_unconnected_devices() const
       std::chrono::minutes(now_tm->tm_min)) };
 
     auto bored = parse_from_iniconf(m_config, now);
-    return list_unconnected(bored, now_hms);
+    m_unconnected = list_unconnected(bored, now_hms);
 }
 
 bool

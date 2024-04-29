@@ -25,6 +25,7 @@ target_link_libraries(boredomlock
                       PRIVATE
                       simpleini
                       usb
+                      udev
 )
 
 target_include_directories(boredomlock PUBLIC ${CMAKE_SOURCE_DIR}/src/include)
