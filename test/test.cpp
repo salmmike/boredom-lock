@@ -135,6 +135,9 @@ TEST(NAME, test_boredom_scheduler_list_unconnected)
     auto mlist = sched.list_unconnected_devices();
     ASSERT_EQ(mlist.size(), 1);
     ASSERT_EQ(mlist[0].name, "TestDevice");
+    USBTracker testtracker;
+    testtracker.start_tracking();
+    testtracker.stop_tracking();
 }
 
 int

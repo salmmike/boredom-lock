@@ -2,6 +2,8 @@
 #define SCHEDULER_H
 
 #include "tools.h"
+#include "usbtracker.h"
+
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -161,6 +163,16 @@ class BoredomScheduler
     std::chrono::time_point<std::chrono::system_clock> m_snooze_start;
     std::function<void(void)> m_callback;
     std::vector<USBDevice> m_unconnected;
+    std::unique_ptr<USBTracker> m_usbtracker;
+
+    bool has_unconnected(
+      const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
+      const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms) const;
+
+    std::vector<USBDevice> list_unconnected(
+      const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
+      const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms) const;
+
     bool m_is_snooze() const;
 };
 

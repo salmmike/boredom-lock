@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "usbtracker.h"
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -7,65 +8,6 @@
 
 const std::string weekend{ "weekend" };
 const std::string weekdays{ "weekdays" };
-
-void
-print_device(BoredomScheduler* scheduler, std::string dev_path)
-{
-    auto path = std::filesystem::path("/sys" + dev_path);
-    std::cout << "Path " << path << " exists:" << std::filesystem::exists(path)
-              << "\n";
-    scheduler->update(path);
-}
-
-int
-udev_monitor(std::function<void(BoredomScheduler*, std::string)> cb,
-             BoredomScheduler* scheduler)
-{
-    struct udev* udev;
-    struct udev_device* dev;
-    struct udev_monitor* mon;
-    int fd;
-
-    /* create udev object */
-    udev = udev_new();
-    if (!udev) {
-        fprintf(stderr, "Can't create udev\n");
-        return 1;
-    }
-
-    mon = udev_monitor_new_from_netlink(udev, "udev");
-    udev_monitor_filter_add_match_subsystem_devtype(mon, "usb", NULL);
-    udev_monitor_enable_receiving(mon);
-    fd = udev_monitor_get_fd(mon);
-
-    while (1) {
-        fd_set fds;
-        struct timeval tv;
-        int ret;
-
-        FD_ZERO(&fds);
-        FD_SET(fd, &fds);
-        tv.tv_sec = 0;
-        tv.tv_usec = 0;
-
-        ret = select(fd + 1, &fds, NULL, NULL, &tv);
-        if (ret > 0 && FD_ISSET(fd, &fds)) {
-            dev = udev_monitor_receive_device(mon);
-            if (dev) {
-                const auto dev_path = udev_device_get_devpath(dev);
-                cb(scheduler, dev_path);
-                /* free dev */
-                udev_device_unref(dev);
-            }
-        }
-        /* 50 milliseconds */
-        usleep(1000);
-    }
-    /* free udev */
-    udev_unref(udev);
-
-    return 0;
-}
 
 std::chrono::hh_mm_ss<std::chrono::seconds>
 hours_minutes(const std::string_view& view)
@@ -169,13 +111,13 @@ parse_from_iniconf(const simpleini::SimpleINI& config,
 }
 
 bool
-has_unconnected(
+BoredomScheduler::has_unconnected(
   const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
-  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms)
+  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms) const
 {
     for (const auto& item : bored) {
         if (is_in_bored_periods(now_hms, item.first)) {
-            if (!usb_id_is_connected(item.second.id)) {
+            if (!m_usbtracker->usb_id_is_connected(item.second.id)) {
                 return true;
             }
         }
@@ -184,14 +126,14 @@ has_unconnected(
 }
 
 std::vector<USBDevice>
-list_unconnected(
+BoredomScheduler::list_unconnected(
   const std::vector<std::pair<std::vector<BoredPeriod>, USBDevice>>& bored,
-  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms)
+  const std::chrono::hh_mm_ss<std::chrono::seconds>& now_hms) const
 {
     std::vector<USBDevice> unconnected;
     for (const auto& item : bored) {
         if (is_in_bored_periods(now_hms, item.first)) {
-            if (!usb_id_is_connected(item.second.id)) {
+            if (!m_usbtracker->usb_id_is_connected(item.second.id)) {
                 unconnected.push_back(item.second);
             }
         }
@@ -236,7 +178,8 @@ BoredomScheduler::init()
     statusfile.close();
 
     m_config = simpleini::SimpleINI(m_configfile);
-    udev_monitor(print_device, this);
+    m_usbtracker = std::make_unique<USBTracker>();
+    m_usbtracker->start_tracking();
 }
 
 bool
@@ -317,7 +260,6 @@ BoredomScheduler::list_unconnected_devices()
 void
 BoredomScheduler::update()
 {
-    std::cout << "Update\n";
     const auto now = std::chrono::system_clock::now();
     const auto now_t = std::chrono::system_clock::to_time_t(now);
     auto now_tm = std::localtime(&now_t);

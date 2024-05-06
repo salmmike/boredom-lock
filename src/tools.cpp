@@ -5,14 +5,6 @@
 #include <stdio.h>
 #include <usb.h>
 
-bool
-usb_id_is_connected(const usb_id& device_id)
-{
-    const auto devices = list_usb();
-    return std::find(std::begin(devices), std::end(devices), device_id) !=
-           std::end(devices);
-}
-
 std::vector<usb_id>
 list_usb()
 {
@@ -58,26 +50,4 @@ usb_id_from_string(const std::string& id)
     ss >> pid;
 
     return usb_id(vid, pid);
-}
-
-std::vector<usb_id>
-init_find_device()
-{
-    return list_usb();
-}
-
-std::vector<usb_id>
-find_device(std::vector<usb_id> previous)
-{
-    const auto current = list_usb();
-    std::vector<usb_id> not_found;
-
-    for (const auto& dev : current) {
-        if (std::find(std::begin(previous), std::end(previous), dev) ==
-            std::end(previous)) {
-            not_found.push_back(dev);
-        }
-    }
-
-    return not_found;
 }

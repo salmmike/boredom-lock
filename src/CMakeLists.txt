@@ -5,12 +5,14 @@ set(
     LIB_HEADERS
     ${CMAKE_SOURCE_DIR}/src/include/scheduler.h;
     ${CMAKE_SOURCE_DIR}/src/include/tools.h;
+    ${CMAKE_SOURCE_DIR}/src/include/usbtracker.h;
 )
 
 set(
     LIB_SOURCES
     ${CMAKE_SOURCE_DIR}/src/tools.cpp;
     ${CMAKE_SOURCE_DIR}/src/scheduler.cpp;
+    ${CMAKE_SOURCE_DIR}/src/usbtracker.cpp;
 )
 
 add_library(
@@ -21,11 +23,15 @@ add_library(
 )
 set_target_properties(boredomlock PROPERTIES PUBLIC_HEADER "${LIB_HEADERS}")
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(libusb REQUIRED libusb-1.0)
+
 target_link_libraries(boredomlock
                       PRIVATE
                       simpleini
                       usb
                       udev
+                      usb-1.0
 )
 
 target_include_directories(boredomlock PUBLIC ${CMAKE_SOURCE_DIR}/src/include)
