@@ -132,7 +132,8 @@ class BoredomScheduler
     /// @brief Enables the alarms.
     void enable();
 
-    void setDeviceEventCB(std::function<void(void)> callback);
+    void set_device_event_cb(std::function<void(void*)> callback);
+    void set_event_cb_data(void* data);
 
     /// @brief Adds a boredom period for device to the current configuration
     /// file.
@@ -161,7 +162,7 @@ class BoredomScheduler
     BSchedulerStatus m_status;
     std::chrono::seconds m_snooze_t{ 0 };
     std::chrono::time_point<std::chrono::system_clock> m_snooze_start;
-    std::function<void(void)> m_callback;
+    std::function<void(void*)> m_callback;
     std::vector<USBDevice> m_unconnected;
     std::unique_ptr<USBTracker> m_usbtracker;
 

@@ -104,18 +104,22 @@ USBTracker::stop_tracking()
 void
 USBTracker::handle_device_add_event(const usb_id& dev)
 {
-    std::cout << "Adding device " << dev.to_string() << "\n";
+    m_mtx.lock();
     m_connected_devices.push_back(dev);
+    m_callback(m_user_data);
+    m_mtx.unlock();
 }
 
 void
 USBTracker::handle_device_remove_event(const usb_id& dev)
 {
-    std::cout << "Removing device " << dev.to_string() << "\n";
+    m_mtx.lock();
     m_connected_devices.erase(std::remove(std::begin(m_connected_devices),
                                           std::end(m_connected_devices),
                                           dev),
                               std::end(m_connected_devices));
+    m_callback(m_user_data);
+    m_mtx.unlock();
 }
 
 bool
@@ -131,9 +135,24 @@ USBTracker::join_thread()
 }
 
 bool
-USBTracker::usb_id_is_connected(const usb_id& device_id) const
+USBTracker::usb_id_is_connected(const usb_id& device_id)
 {
-    return std::find(std::begin(m_connected_devices),
-                     std::end(m_connected_devices),
-                     device_id) != std::end(m_connected_devices);
+    m_mtx.lock();
+    bool result = std::find(std::begin(m_connected_devices),
+                            std::end(m_connected_devices),
+                            device_id) != std::end(m_connected_devices);
+    m_mtx.unlock();
+    return result;
+}
+
+void
+USBTracker::set_device_event_cb(std::function<void(void*)> callback)
+{
+    m_callback = callback;
+}
+
+void
+USBTracker::set_event_cb_data(void* data)
+{
+    m_user_data = data;
 }

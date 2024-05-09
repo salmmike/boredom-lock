@@ -231,9 +231,15 @@ BoredomScheduler::enable()
 }
 
 void
-BoredomScheduler::setDeviceEventCB(std::function<void(void)> callback)
+BoredomScheduler::set_device_event_cb(std::function<void(void*)> callback)
 {
-    m_callback = callback;
+    m_usbtracker->set_device_event_cb(callback);
+}
+
+void
+BoredomScheduler::set_event_cb_data(void* data)
+{
+    m_usbtracker->set_event_cb_data(data);
 }
 
 void
