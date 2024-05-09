@@ -30,7 +30,6 @@ target_link_libraries(boredomlock
                       PRIVATE
                       simpleini
                       usb
-                      udev
                       usb-1.0
 )
 
