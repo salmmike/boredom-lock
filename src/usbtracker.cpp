@@ -51,7 +51,7 @@ track_usb_devices(USBTracker* tracker)
         .tv_sec = 0, .tv_usec = 500,
     };
 
-    libusb_init_context(NULL, NULL, 0);
+    libusb_init(NULL);
 
     rc = libusb_hotplug_register_callback(NULL,
                                           LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
