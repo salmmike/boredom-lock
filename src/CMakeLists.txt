@@ -21,6 +21,8 @@ add_library(
     ${LIB_SOURCES}
     ${LIB_HEADERS}
 )
+set_target_properties(boredomlock PROPERTIES VERSION 1.0)
+
 set_target_properties(boredomlock PROPERTIES PUBLIC_HEADER "${LIB_HEADERS}")
 
 find_package(PkgConfig REQUIRED)
